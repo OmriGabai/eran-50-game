@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { GameImage, RoundType, ROUND_CONFIG } from '@/types/game';
 import { BirthdayBanner } from '@/components/shared/BirthdayBanner';
 import Link from 'next/link';
@@ -8,11 +8,14 @@ import Link from 'next/link';
 export default function AdminPage() {
   const [images, setImages] = useState<GameImage[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
   const [selectedRoundType, setSelectedRoundType] = useState<RoundType>('normal');
   const [caption, setCaption] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-  const [uploadMode, setUploadMode] = useState<'file' | 'url'>('url');
+  const [uploadMode, setUploadMode] = useState<'file' | 'url'>('file');
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchImages = useCallback(async () => {
     try {
@@ -28,18 +31,12 @@ export default function AdminPage() {
     fetchImages();
   }, [fetchImages]);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    setMessage(null);
-
+  const uploadSingleFile = async (file: File, roundType: RoundType): Promise<boolean> => {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('roundType', selectedRoundType);
-      formData.append('caption', caption);
+      formData.append('roundType', roundType);
+      formData.append('caption', '');
 
       const res = await fetch('/api/upload', {
         method: 'POST',
@@ -54,19 +51,77 @@ export default function AdminPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ image: data.image }),
         });
-
-        await fetchImages();
-        setCaption('');
-        setMessage({ type: 'success', text: 'Image uploaded successfully!' });
-      } else {
-        setMessage({ type: 'error', text: data.error || 'Upload failed. Make sure Cloudinary is configured.' });
+        return true;
       }
+      return false;
     } catch (error) {
       console.error('Upload error:', error);
-      setMessage({ type: 'error', text: 'Upload failed. Make sure Cloudinary is configured in .env.local' });
-    } finally {
-      setIsUploading(false);
-      e.target.value = '';
+      return false;
+    }
+  };
+
+  const handleMultipleFiles = async (files: FileList | File[]) => {
+    const fileArray = Array.from(files).filter(f => f.type.startsWith('image/'));
+    if (fileArray.length === 0) {
+      setMessage({ type: 'error', text: 'No valid image files found' });
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress({ current: 0, total: fileArray.length });
+    setMessage(null);
+
+    let successCount = 0;
+    const currentImageCount = images.length;
+
+    for (let i = 0; i < fileArray.length; i++) {
+      // Auto-assign round type based on position
+      const roundIndex = currentImageCount + i;
+      const roundType = roundIndex < ROUND_CONFIG.length
+        ? ROUND_CONFIG[roundIndex].type
+        : 'normal';
+
+      const success = await uploadSingleFile(fileArray[i], roundType);
+      if (success) successCount++;
+      setUploadProgress({ current: i + 1, total: fileArray.length });
+    }
+
+    await fetchImages();
+    setIsUploading(false);
+    setUploadProgress({ current: 0, total: 0 });
+
+    if (successCount === fileArray.length) {
+      setMessage({ type: 'success', text: `${successCount} images uploaded successfully!` });
+    } else if (successCount > 0) {
+      setMessage({ type: 'error', text: `${successCount}/${fileArray.length} images uploaded. Some failed.` });
+    } else {
+      setMessage({ type: 'error', text: 'Upload failed. Make sure Cloudinary is configured.' });
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    await handleMultipleFiles(files);
+    e.target.value = '';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      await handleMultipleFiles(files);
     }
   };
 
@@ -187,12 +242,22 @@ export default function AdminPage() {
           </Link>
         </div>
 
-        {/* Upload Form */}
+        {/* Drag & Drop Upload Zone */}
         <div className="card mb-8">
-          <h3 className="text-xl font-bold text-purple mb-4">Add New Image</h3>
+          <h3 className="text-xl font-bold text-purple mb-4">Upload Images</h3>
 
           {/* Upload Mode Toggle */}
           <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => setUploadMode('file')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                uploadMode === 'file'
+                  ? 'bg-purple text-cream'
+                  : 'bg-purple/10 text-purple hover:bg-purple/20'
+              }`}
+            >
+              Upload Files
+            </button>
             <button
               onClick={() => setUploadMode('url')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -203,50 +268,95 @@ export default function AdminPage() {
             >
               Add by URL
             </button>
-            <button
-              onClick={() => setUploadMode('file')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                uploadMode === 'file'
-                  ? 'bg-purple text-cream'
-                  : 'bg-purple/10 text-purple hover:bg-purple/20'
-              }`}
-            >
-              Upload File
-            </button>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-purple mb-1">
-                Round Type
-              </label>
-              <select
-                value={selectedRoundType}
-                onChange={(e) => setSelectedRoundType(e.target.value as RoundType)}
-                className="input-field"
+          {uploadMode === 'file' ? (
+            <>
+              {/* Drag & Drop Zone */}
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+                className={`
+                  border-3 border-dashed rounded-xl p-12 text-center cursor-pointer
+                  transition-all duration-200
+                  ${isDragging
+                    ? 'border-gold bg-gold/20 scale-102'
+                    : 'border-purple/30 hover:border-gold hover:bg-gold/5'
+                  }
+                  ${isUploading ? 'pointer-events-none opacity-60' : ''}
+                `}
               >
-                <option value="normal">Normal (100 pts)</option>
-                <option value="roast">Roast (150 pts)</option>
-                <option value="tribute">Tribute (200 pts)</option>
-              </select>
-            </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleFileUpload}
+                  disabled={isUploading}
+                  className="hidden"
+                />
 
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-purple mb-1">
-                Image Caption (optional context)
-              </label>
-              <input
-                type="text"
-                value={caption}
-                onChange={(e) => setCaption(e.target.value)}
-                placeholder="e.g., 'Eran at the beach, 2019'"
-                className="input-field"
-              />
-            </div>
-          </div>
-
-          {uploadMode === 'url' ? (
+                {isUploading ? (
+                  <div>
+                    <div className="text-4xl mb-4">&#9889;</div>
+                    <p className="text-lg font-medium text-purple">
+                      Uploading... {uploadProgress.current}/{uploadProgress.total}
+                    </p>
+                    <div className="w-48 h-2 bg-purple/20 rounded-full mx-auto mt-4">
+                      <div
+                        className="h-full bg-gold rounded-full transition-all"
+                        style={{ width: `${(uploadProgress.current / uploadProgress.total) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-5xl mb-4">&#128247;</div>
+                    <p className="text-lg font-medium text-purple mb-2">
+                      Drag & drop images here
+                    </p>
+                    <p className="text-purple/60">
+                      or click to select files
+                    </p>
+                    <p className="text-sm text-purple/40 mt-4">
+                      Upload multiple images at once - they&apos;ll be auto-assigned to rounds
+                    </p>
+                  </>
+                )}
+              </div>
+            </>
+          ) : (
             <div className="space-y-4">
+              <div className="grid md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-purple mb-1">
+                    Round Type
+                  </label>
+                  <select
+                    value={selectedRoundType}
+                    onChange={(e) => setSelectedRoundType(e.target.value as RoundType)}
+                    className="input-field"
+                  >
+                    <option value="normal">Normal (100 pts)</option>
+                    <option value="roast">Roast (150 pts)</option>
+                    <option value="tribute">Tribute (200 pts)</option>
+                  </select>
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-purple mb-1">
+                    Caption (optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={caption}
+                    onChange={(e) => setCaption(e.target.value)}
+                    placeholder="e.g., 'Eran at the beach, 2019'"
+                    className="input-field"
+                  />
+                </div>
+              </div>
               <div>
                 <label className="block text-sm font-medium text-purple mb-1">
                   Image URL
@@ -266,34 +376,6 @@ export default function AdminPage() {
               >
                 {isUploading ? 'Adding...' : 'Add Image'}
               </button>
-            </div>
-          ) : (
-            <div>
-              <label className="block text-sm font-medium text-purple mb-1">
-                Upload Image (requires Cloudinary)
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleFileUpload}
-                disabled={isUploading}
-                className="block w-full text-sm text-purple
-                  file:mr-4 file:py-2 file:px-4
-                  file:rounded-full file:border-0
-                  file:text-sm file:font-semibold
-                  file:bg-gold file:text-purple-dark
-                  hover:file:bg-gold-dark
-                  disabled:opacity-50"
-              />
-              <p className="text-xs text-purple/50 mt-1">
-                File upload requires Cloudinary configuration in .env.local
-              </p>
-            </div>
-          )}
-
-          {isUploading && (
-            <div className="mt-4 text-purple/60">
-              Processing...
             </div>
           )}
 
