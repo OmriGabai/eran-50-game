@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { VersionBadge } from "@/components/shared/VersionBadge";
 
 export const metadata: Metadata = {
   title: "Eran's 50th Birthday Meme Game",
@@ -18,6 +19,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         {children}
+        <VersionBadge />
       </body>
     </html>
   );
