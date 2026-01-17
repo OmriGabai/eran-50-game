@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-const VERSION = 'v1.4.0';
+const VERSION = 'v1.5.0';
 
 export function VersionBadge() {
   const [visible, setVisible] = useState(true);

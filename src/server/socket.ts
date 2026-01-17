@@ -72,9 +72,9 @@ export function initializeSocket(httpServer: HTTPServer) {
     });
 
     // Host starts the game
-    socket.on('start-game', () => {
-      // Load images from the image store
-      const images = imageStore.getImages();
+    socket.on('start-game', async () => {
+      // Sync images from Cloudinary if needed, then load into game
+      const images = await imageStore.syncFromCloudinary();
       gameManager.setImages(images);
       gameManager.startGame();
     });

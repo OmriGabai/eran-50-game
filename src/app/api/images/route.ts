@@ -1,9 +1,67 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { v2 as cloudinary } from 'cloudinary';
 import { GameImage, RoundType } from '@/types/game';
 import { imageStore } from '@/server/imageStore';
 
+// Configure Cloudinary
+function configureCloudinary() {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+  if (!cloudName || !apiKey || !apiSecret) {
+    return false;
+  }
+
+  cloudinary.config({
+    cloud_name: cloudName,
+    api_key: apiKey,
+    api_secret: apiSecret,
+  });
+  return true;
+}
+
+// Fetch images from Cloudinary
+async function fetchFromCloudinary(): Promise<GameImage[]> {
+  if (!configureCloudinary()) {
+    console.error('Cloudinary not configured');
+    return [];
+  }
+
+  try {
+    const result = await cloudinary.api.resources({
+      type: 'upload',
+      prefix: 'eran-50-game/',
+      max_results: 50,
+    });
+
+    return result.resources.map((resource: { public_id: string; secure_url: string }) => ({
+      id: resource.public_id,
+      url: resource.secure_url,
+      caption: '',
+      roundType: 'normal' as RoundType,
+    }));
+  } catch (error) {
+    console.error('Failed to fetch from Cloudinary:', error);
+    return [];
+  }
+}
+
 export async function GET() {
-  return NextResponse.json({ images: imageStore.getImages() });
+  // Check in-memory store first
+  let images = imageStore.getImages();
+
+  // If empty, try to fetch from Cloudinary
+  if (images.length === 0) {
+    console.log('No images in memory, fetching from Cloudinary...');
+    images = await fetchFromCloudinary();
+    if (images.length > 0) {
+      imageStore.setImages(images);
+      console.log(`Loaded ${images.length} images from Cloudinary`);
+    }
+  }
+
+  return NextResponse.json({ images });
 }
 
 export async function POST(request: NextRequest) {
