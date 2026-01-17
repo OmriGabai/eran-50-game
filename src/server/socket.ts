@@ -34,20 +34,26 @@ export function initializeSocket(httpServer: HTTPServer) {
   });
 
   io.on('connection', (socket: Socket<ClientToServerEvents, ServerToClientEvents>) => {
-    console.log('Client connected:', socket.id);
+    const clientIp = socket.handshake.address;
+    const transport = socket.conn.transport.name;
+    console.log(`[CONNECT] Client connected | socketId=${socket.id} | ip=${clientIp} | transport=${transport}`);
 
     // Send current state to new connection
     socket.emit('game-state', gameManager.getState());
 
     // Player joins the game
     socket.on('join', (name, callback) => {
+      console.log(`[JOIN] Player attempting to join | socketId=${socket.id} | name=${name}`);
       const result = gameManager.addPlayer(name);
       if (result.success && result.playerId) {
         socketToPlayer.set(socket.id, result.playerId);
         const player = gameManager.getPlayer(result.playerId);
+        console.log(`[JOIN] Player joined successfully | socketId=${socket.id} | playerId=${result.playerId} | name=${name} | isJudge=${player?.isJudge}`);
         if (player) {
           io?.emit('player-joined', player);
         }
+      } else {
+        console.log(`[JOIN] Player join failed | socketId=${socket.id} | name=${name} | error=${result.error}`);
       }
       callback(result);
     });
@@ -94,6 +100,11 @@ export function initializeSocket(httpServer: HTTPServer) {
       gameManager.proceedToNextRound();
     });
 
+    // Host ends game explicitly
+    socket.on('end-game', () => {
+      gameManager.endGameExplicitly();
+    });
+
     // Host resets game
     socket.on('reset-game', () => {
       gameManager.resetGame();
@@ -101,22 +112,36 @@ export function initializeSocket(httpServer: HTTPServer) {
 
     // Player reconnects
     socket.on('reconnect', (playerId, callback) => {
+      console.log(`[RECONNECT] Player attempting to reconnect | socketId=${socket.id} | playerId=${playerId}`);
       const result = gameManager.reconnectPlayer(playerId);
       if (result.success) {
         socketToPlayer.set(socket.id, playerId);
+        const player = gameManager.getPlayer(playerId);
+        console.log(`[RECONNECT] Player reconnected successfully | socketId=${socket.id} | playerId=${playerId} | name=${player?.name}`);
+      } else {
+        console.log(`[RECONNECT] Player reconnect failed | socketId=${socket.id} | playerId=${playerId} | error=${result.error}`);
       }
       callback(result);
     });
 
     // Handle disconnection
-    socket.on('disconnect', () => {
-      console.log('Client disconnected:', socket.id);
+    socket.on('disconnect', (reason) => {
       const playerId = socketToPlayer.get(socket.id);
+      const player = playerId ? gameManager.getPlayer(playerId) : null;
+      console.log(`[DISCONNECT] Client disconnected | socketId=${socket.id} | reason=${reason} | playerId=${playerId || 'none'} | playerName=${player?.name || 'unknown'}`);
+
       if (playerId) {
         gameManager.removePlayer(playerId);
         socketToPlayer.delete(socket.id);
         io?.emit('player-left', playerId);
+        console.log(`[DISCONNECT] Player marked as disconnected | playerId=${playerId} | name=${player?.name}`);
       }
+    });
+
+    // Log transport upgrades (polling -> websocket)
+    socket.conn.on('upgrade', (transport) => {
+      const playerId = socketToPlayer.get(socket.id);
+      console.log(`[TRANSPORT] Connection upgraded | socketId=${socket.id} | playerId=${playerId || 'none'} | newTransport=${transport.name}`);
     });
   });
 

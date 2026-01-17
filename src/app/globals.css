@@ -10,11 +10,29 @@
   --cream: #FDF8E8;
 }
 
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  /* Prevent text size adjustment on orientation change */
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   min-height: 100vh;
+  min-height: 100dvh; /* Dynamic viewport height for mobile */
+  overscroll-behavior: none;
+}
+
+/* Smooth scrolling */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
 }
 
 /* Custom scrollbar for the birthday theme */
@@ -43,25 +61,28 @@ body {
 
 @layer components {
   .btn-primary {
-    @apply bg-gold hover:bg-gold-dark text-purple-dark font-bold py-3 px-6 rounded-lg
+    @apply bg-gold hover:bg-gold-dark text-purple-dark font-bold py-3 px-6 rounded-xl
            transition-all duration-200 shadow-lg hover:shadow-xl
-           active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+           active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
+           touch-manipulation select-none;
   }
 
   .btn-secondary {
-    @apply bg-purple hover:bg-purple-dark text-cream font-bold py-3 px-6 rounded-lg
+    @apply bg-purple hover:bg-purple-dark text-cream font-bold py-3 px-6 rounded-xl
            transition-all duration-200 shadow-lg hover:shadow-xl
-           active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+           active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
+           touch-manipulation select-none;
   }
 
   .card {
-    @apply bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 border-2 border-gold/20;
+    @apply bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-4 sm:p-6 border-2 border-gold/20;
   }
 
   .input-field {
-    @apply w-full px-4 py-3 rounded-lg border-2 border-gold/30 focus:border-gold
+    @apply w-full px-4 py-3 rounded-xl border-2 border-gold/30 focus:border-gold
            focus:outline-none focus:ring-2 focus:ring-gold/20 bg-white/80
-           text-purple-dark placeholder-purple/40 transition-all;
+           text-purple-dark placeholder-purple/40 transition-all
+           text-base; /* Prevents zoom on iOS */
   }
 
   .gradient-bg {
@@ -70,5 +91,59 @@ body {
 
   .title-text {
     @apply text-transparent bg-clip-text bg-gradient-to-r from-purple via-gold to-purple;
+  }
+
+  .meme-text {
+    font-family: Impact, 'Arial Black', sans-serif;
+    font-size: clamp(1rem, 3vw, 2.5rem);
+    font-weight: 900;
+    color: white;
+    text-transform: uppercase;
+    text-shadow:
+      2px 2px 0 #000,
+      -2px -2px 0 #000,
+      2px -2px 0 #000,
+      -2px 2px 0 #000,
+      2px 0 0 #000,
+      -2px 0 0 #000,
+      0 2px 0 #000,
+      0 -2px 0 #000;
+    line-height: 1.1;
+    word-wrap: break-word;
+  }
+
+  /* Pulse animation for connecting states */
+  .pulse-gold {
+    animation: pulse-gold 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-gold {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* Slide up animation for reveals */
+  .animate-slide-up {
+    animation: slide-up 0.3s ease-out;
+  }
+
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Safe area padding for notched phones */
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }

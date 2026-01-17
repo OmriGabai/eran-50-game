@@ -140,13 +140,13 @@ class GameManager {
   private startNextRound() {
     this.state.roundNumber++;
 
-    if (this.state.roundNumber > this.state.totalRounds) {
-      this.endGame();
-      return;
-    }
+    // Get round config - cycle through configs for bonus rounds
+    const configIndex = (this.state.roundNumber - 1) % ROUND_CONFIG.length;
+    const roundConfig = ROUND_CONFIG[configIndex];
 
-    const roundConfig = ROUND_CONFIG[this.state.roundNumber - 1];
-    const image = this.state.images[this.state.roundNumber - 1];
+    // Cycle through images for bonus rounds
+    const imageIndex = (this.state.roundNumber - 1) % Math.max(this.state.images.length, 1);
+    const image = this.state.images[imageIndex];
 
     // Reset player submission status
     this.state.players.forEach((p) => {
@@ -245,10 +245,12 @@ class GameManager {
       return;
     }
 
-    // Shuffle captions for dramatic reveal
+    // Shuffle captions
     this.state.currentRound.captions = this.shuffleArray([...this.state.currentRound.captions]);
-    this.state.phase = 'reveal';
-    this.state.revealIndex = -1;
+
+    // Skip reveal phase, go directly to judging
+    this.state.phase = 'judging';
+    this.state.revealIndex = this.state.currentRound.captions.length - 1;
     this.emitState();
   }
 
@@ -301,6 +303,10 @@ class GameManager {
 
   proceedToNextRound() {
     this.startNextRound();
+  }
+
+  endGameExplicitly() {
+    this.endGame();
   }
 
   private endGame() {

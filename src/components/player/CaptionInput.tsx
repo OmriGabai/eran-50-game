@@ -46,14 +46,14 @@ export function CaptionInput({ round, player, timeRemaining, onSubmit }: Caption
   }
 
   return (
-    <div className="min-h-screen gradient-bg flex flex-col p-4">
+    <div className="min-h-screen min-h-[100dvh] gradient-bg flex flex-col p-3 sm:p-4 safe-area-top safe-area-bottom">
       {/* Timer */}
-      <div className="mb-4">
+      <div className="mb-3">
         <Timer seconds={timeRemaining} maxSeconds={CAPTION_TIME_SECONDS} />
       </div>
 
       {/* Round info */}
-      <div className="text-center mb-4">
+      <div className="text-center mb-3">
         <span className="bg-purple/10 text-purple px-3 py-1 rounded-full text-sm font-medium">
           Round {round.number} - {round.type.toUpperCase()}
         </span>
@@ -61,8 +61,9 @@ export function CaptionInput({ round, player, timeRemaining, onSubmit }: Caption
       </div>
 
       {/* Image thumbnail */}
-      <div className="card p-2 mb-4">
-        <div className="relative aspect-video bg-gray-200 rounded-lg overflow-hidden">
+      <div className="card p-2 mb-3">
+        <p className="text-purple font-medium text-center mb-2 text-sm">Caption this!</p>
+        <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
           {round.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -84,20 +85,21 @@ export function CaptionInput({ round, player, timeRemaining, onSubmit }: Caption
           <textarea
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
-            placeholder="Write your caption here..."
-            className="input-field h-32 resize-none text-lg"
+            placeholder="Write your caption here... (use Enter for top/bottom split)"
+            className="input-field h-24 sm:h-32 resize-none text-base sm:text-lg"
             maxLength={200}
             autoFocus
           />
-          <div className="text-right text-sm text-purple/50 mt-1">
-            {caption.length}/200
+          <div className="flex justify-between text-sm text-purple/50 mt-1 px-1">
+            <span className="text-xs">Tip: Press Enter to split top/bottom</span>
+            <span>{caption.length}/200</span>
           </div>
         </div>
 
         <button
           type="submit"
           disabled={!caption.trim()}
-          className="btn-primary text-xl mt-4"
+          className="btn-primary text-lg sm:text-xl mt-3 py-4"
         >
           Submit Caption
         </button>

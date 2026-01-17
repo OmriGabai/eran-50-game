@@ -16,6 +16,7 @@ export default function PlayPage() {
     currentPlayer,
     playerId,
     timeRemaining,
+    error,
     joinGame,
     submitCaption,
     selectWinner,
@@ -25,9 +26,18 @@ export default function PlayPage() {
     return (
       <div className="min-h-screen gradient-bg flex items-center justify-center p-4">
         <div className="card text-center">
-          <div className="text-4xl mb-4">&#128268;</div>
-          <h2 className="text-xl font-bold text-purple">Connecting...</h2>
-          <p className="text-purple/60 mt-2">Finding the party</p>
+          <div className="text-4xl mb-4 animate-pulse">{'\u{1F50C}'}</div>
+          <h2 className="text-xl font-bold text-purple">
+            {error ? 'Reconnecting...' : 'Connecting...'}
+          </h2>
+          <p className="text-purple/60 mt-2">
+            {error || 'Finding the party'}
+          </p>
+          {error && (
+            <p className="text-sm text-purple/40 mt-4">
+              Don&apos;t worry, you&apos;ll rejoin automatically
+            </p>
+          )}
         </div>
       </div>
     );
@@ -102,7 +112,7 @@ export default function PlayPage() {
             <p className="text-sm text-purple/60">Your final score</p>
             <p className="text-5xl font-bold text-gold">{currentPlayer.score}</p>
             <p className="text-lg text-purple">
-              {playerRank === 1 ? '&#127942; Winner!' : `#${playerRank} place`}
+              {playerRank === 1 ? '\u{1F3C6} Winner!' : `#${playerRank} place`}
             </p>
           </div>
 

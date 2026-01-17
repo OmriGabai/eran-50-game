@@ -1,6 +1,7 @@
 'use client';
 
 import { Round, Player } from '@/types/game';
+import { MemeImage } from '../shared/MemeImage';
 
 interface JudgingScreenProps {
   round: Round;
@@ -9,9 +10,34 @@ interface JudgingScreenProps {
 }
 
 export function JudgingScreen({ round, judge, onSelectWinner }: JudgingScreenProps) {
+  // Split caption into top and bottom text if it contains a newline or is long
+  const splitCaption = (text: string): { top: string; bottom: string } => {
+    // If caption has a newline, split there
+    if (text.includes('\n')) {
+      const parts = text.split('\n');
+      return { top: parts[0], bottom: parts.slice(1).join(' ') };
+    }
+    // If caption is short, just put it at the bottom
+    if (text.length < 50) {
+      return { top: '', bottom: text };
+    }
+    // For longer captions, try to split in the middle at a space
+    const midpoint = Math.floor(text.length / 2);
+    const spaceAfter = text.indexOf(' ', midpoint);
+    const spaceBefore = text.lastIndexOf(' ', midpoint);
+    const splitPoint = (spaceAfter !== -1 && spaceAfter - midpoint < midpoint - spaceBefore)
+      ? spaceAfter
+      : spaceBefore;
+
+    if (splitPoint === -1) {
+      return { top: '', bottom: text };
+    }
+    return { top: text.slice(0, splitPoint), bottom: text.slice(splitPoint + 1) };
+  };
+
   return (
     <div className="min-h-screen gradient-bg p-8">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
           <h2 className="text-4xl font-bold title-text mb-2">
@@ -19,7 +45,7 @@ export function JudgingScreen({ round, judge, onSelectWinner }: JudgingScreenPro
           </h2>
           {judge ? (
             <p className="text-xl text-purple/70">
-              {judge.name}, pick your favorite caption!
+              {judge.name}, pick your favorite!
             </p>
           ) : (
             <p className="text-xl text-amber-600">
@@ -28,49 +54,31 @@ export function JudgingScreen({ round, judge, onSelectWinner }: JudgingScreenPro
           )}
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          {/* Image */}
-          <div className="card p-4">
-            <div className="relative aspect-video bg-gray-200 rounded-lg overflow-hidden">
-              {round.imageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={round.imageUrl}
-                  alt="The meme"
-                  className="w-full h-full object-contain"
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full">
-                  <span className="text-gray-400">No image</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Captions to choose from */}
-          <div className="card">
-            <h3 className="text-xl font-bold text-purple mb-4">
-              Select the Winner
-            </h3>
-            <div className="space-y-3 max-h-[60vh] overflow-y-auto">
-              {round.captions.map((caption) => (
-                <button
-                  key={caption.playerId}
-                  onClick={() => onSelectWinner(caption.playerId)}
-                  className={`
-                    w-full p-4 rounded-lg border-2 text-left
-                    transition-all duration-200 hover:scale-102
-                    bg-white/70 border-gold/30 hover:border-gold hover:bg-gold/10
-                  `}
-                >
-                  <p className="text-lg font-medium text-purple-dark mb-1">
-                    &quot;{caption.text}&quot;
+        {/* Meme grid */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {round.captions.map((caption) => {
+            const { top, bottom } = splitCaption(caption.text);
+            return (
+              <button
+                key={caption.playerId}
+                onClick={() => onSelectWinner(caption.playerId)}
+                className="group transition-all duration-200 hover:scale-105 focus:outline-none"
+              >
+                <div className="card p-3 group-hover:border-gold group-hover:shadow-2xl transition-all">
+                  {round.imageUrl && (
+                    <MemeImage
+                      imageUrl={round.imageUrl}
+                      topText={top}
+                      bottomText={bottom}
+                    />
+                  )}
+                  <p className="mt-2 text-sm text-purple/60 text-center">
+                    - {caption.playerName}
                   </p>
-                  <p className="text-sm text-purple/60">- {caption.playerName}</p>
-                </button>
-              ))}
-            </div>
-          </div>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

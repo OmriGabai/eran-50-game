@@ -3,16 +3,42 @@
 import { useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { Round, Player } from '@/types/game';
+import { MemeImage } from '../shared/MemeImage';
 
 interface WinnerScreenProps {
   round: Round;
   players: Player[];
   onNextRound: () => void;
+  onEndGame: () => void;
   isLastRound: boolean;
 }
 
-export function WinnerScreen({ round, players, onNextRound, isLastRound }: WinnerScreenProps) {
+// Split caption into top and bottom text
+function splitCaption(text: string): { top: string; bottom: string } {
+  if (text.includes('\n')) {
+    const parts = text.split('\n');
+    return { top: parts[0], bottom: parts.slice(1).join(' ') };
+  }
+  if (text.length < 50) {
+    return { top: '', bottom: text };
+  }
+  const midpoint = Math.floor(text.length / 2);
+  const spaceAfter = text.indexOf(' ', midpoint);
+  const spaceBefore = text.lastIndexOf(' ', midpoint);
+  const splitPoint = (spaceAfter !== -1 && spaceAfter - midpoint < midpoint - spaceBefore)
+    ? spaceAfter
+    : spaceBefore;
+
+  if (splitPoint === -1) {
+    return { top: '', bottom: text };
+  }
+  return { top: text.slice(0, splitPoint), bottom: text.slice(splitPoint + 1) };
+}
+
+export function WinnerScreen({ round, players, onNextRound, onEndGame, isLastRound }: WinnerScreenProps) {
   const winner = players.find(p => p.id === round.winningCaption?.playerId);
+  const captionText = round.winningCaption?.text || '';
+  const { top, bottom } = splitCaption(captionText);
 
   useEffect(() => {
     // Fire confetti!
@@ -48,7 +74,7 @@ export function WinnerScreen({ round, players, onNextRound, isLastRound }: Winne
     <div className="min-h-screen gradient-bg p-8 flex items-center justify-center">
       <div className="max-w-4xl mx-auto text-center">
         <div className="card p-12">
-          <div className="text-6xl mb-4">&#127942;</div>
+          <div className="text-6xl mb-4">{'\u{1F3C6}'}</div>
 
           <h2 className="text-4xl font-bold title-text mb-6">Winner!</h2>
 
@@ -63,31 +89,36 @@ export function WinnerScreen({ round, players, onNextRound, isLastRound }: Winne
             </div>
           )}
 
-          {round.winningCaption && (
-            <div className="bg-gold/10 p-6 rounded-xl mb-8">
-              <p className="text-2xl font-medium text-purple-dark italic">
-                &quot;{round.winningCaption.text}&quot;
-              </p>
+          {/* Winning meme */}
+          {round.imageUrl && (
+            <div className="max-w-lg mx-auto mb-8">
+              <MemeImage
+                imageUrl={round.imageUrl}
+                topText={top}
+                bottomText={bottom}
+              />
             </div>
           )}
 
-          <div className="relative aspect-video max-w-md mx-auto bg-gray-200 rounded-lg overflow-hidden mb-8">
-            {round.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={round.imageUrl}
-                alt="Winning meme"
-                className="w-full h-full object-contain"
-              />
-            ) : null}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              onClick={onNextRound}
+              className="btn-primary text-xl px-8 py-3"
+            >
+              {isLastRound ? 'Bonus Round!' : 'Next Round'}
+            </button>
+            <button
+              onClick={onEndGame}
+              className="btn-secondary text-xl px-8 py-3"
+            >
+              End Game
+            </button>
           </div>
-
-          <button
-            onClick={onNextRound}
-            className="btn-primary text-2xl px-12 py-4"
-          >
-            {isLastRound ? 'Final Scores!' : 'Next Round'}
-          </button>
+          {isLastRound && (
+            <p className="text-purple/60 mt-4 text-sm">
+              All planned rounds complete! Continue with bonus rounds or end the game.
+            </p>
+          )}
         </div>
       </div>
     </div>

@@ -14,10 +14,12 @@ export default function HostPage() {
     isConnected,
     gameState,
     timeRemaining,
+    error,
     startGame,
     nextReveal,
     selectWinner,
     nextRound,
+    endGame,
     resetGame,
   } = useSocket();
 
@@ -25,9 +27,18 @@ export default function HostPage() {
     return (
       <div className="min-h-screen gradient-bg flex items-center justify-center">
         <div className="card text-center">
-          <div className="text-4xl mb-4">&#128268;</div>
-          <h2 className="text-2xl font-bold text-purple">Connecting...</h2>
-          <p className="text-purple/60 mt-2">Setting up the party game</p>
+          <div className="text-4xl mb-4 animate-pulse">{'\u{1F50C}'}</div>
+          <h2 className="text-2xl font-bold text-purple">
+            {error ? 'Reconnecting...' : 'Connecting...'}
+          </h2>
+          <p className="text-purple/60 mt-2">
+            {error || 'Setting up the party game'}
+          </p>
+          {error && (
+            <p className="text-sm text-purple/40 mt-4">
+              The game will resume automatically when connected
+            </p>
+          )}
         </div>
       </div>
     );
@@ -93,6 +104,7 @@ export default function HostPage() {
           round={currentRound}
           players={players}
           onNextRound={nextRound}
+          onEndGame={endGame}
           isLastRound={isLastRound}
         />
       );

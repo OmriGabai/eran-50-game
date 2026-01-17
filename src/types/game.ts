@@ -75,6 +75,7 @@ export interface ClientToServerEvents {
   'next-reveal': () => void;
   'start-judging': () => void;
   'next-round': () => void;
+  'end-game': () => void;
   'reset-game': () => void;
   'reconnect': (playerId: string, callback: (response: { success: boolean; error?: string }) => void) => void;
 }
