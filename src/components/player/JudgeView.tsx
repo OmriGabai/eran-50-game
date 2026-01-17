@@ -131,7 +131,7 @@ export function JudgeView({ phase, round, players, timeRemaining, onSelectWinner
       <div className="card flex-1 flex items-center justify-center">
         <div className="text-center">
           <div className="text-6xl mb-4">
-            {phase === 'winner' ? '&#127942;' : '&#127881;'}
+            {phase === 'winner' ? '\u{1F3C6}' : '\u{1F389}'}
           </div>
           <h2 className="text-xl font-bold text-purple">
             {phase === 'winner' ? 'Great pick!' : 'Watch the TV screen!'}
