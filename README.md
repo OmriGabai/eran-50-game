@@ -1,36 +1,121 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Eran's 50th Birthday Bash - Make It Meme
 
-## Getting Started
+A multiplayer party game where players compete to write the funniest captions for images displayed on a shared screen. Perfect for birthday parties and gatherings!
 
-First, run the development server:
+## How It Works
+
+1. **Host** opens the game on a TV/projector (`/host`)
+2. **Players** join on their phones (`/play`)
+3. **Eran** (the birthday person) joins as the permanent judge
+4. Each round, an image is shown and players write captions
+5. Captions appear as memes (Impact font, top/bottom text)
+6. The judge picks their favorite - winner gets points!
+
+## Features
+
+- Real-time multiplayer via Socket.io
+- Meme-style captions with live preview while typing
+- Mobile-friendly UI with safe area support
+- Multiple round types: Normal (100pts), Roast (150pts), Tribute (200pts)
+- Persistent images via Cloudinary (survives server restarts)
+- Bonus rounds - game continues as long as you want
+- Auto-reconnection if connection drops
+
+## Tech Stack
+
+- **Frontend**: Next.js 14, React, Tailwind CSS
+- **Real-time**: Socket.io
+- **Images**: Cloudinary
+- **Deployment**: Render
+
+## Setup
+
+### Prerequisites
+
+- Node.js 18+
+- Cloudinary account (free tier works)
+
+### Installation
 
 ```bash
+# Clone the repo
+git clone https://github.com/OmriGabai/eran-50-game.git
+cd eran-50-game
+
+# Install dependencies
+npm install
+
+# Create .env.local with your Cloudinary credentials
+echo "CLOUDINARY_CLOUD_NAME=your_cloud_name" >> .env.local
+echo "CLOUDINARY_API_KEY=your_api_key" >> .env.local
+echo "CLOUDINARY_API_SECRET=your_api_secret" >> .env.local
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Production Build
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run build
+npm start
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Usage
 
-## Learn More
+### Admin Page (`/admin`)
 
-To learn more about Next.js, take a look at the following resources:
+Upload images before the party:
+- Drag & drop multiple images
+- Images are stored in Cloudinary
+- Reorder images for round sequence
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Host Page (`/host`)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Display on TV/projector:
+- Shows player lobby before game starts
+- Displays images and timer during rounds
+- Shows all captions as a meme grid for judging
+- Celebrates winners with confetti
 
-## Deploy on Vercel
+### Player Page (`/play`)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Players join on their phones:
+- Enter name to join (enter "Eran" to be the judge)
+- Write captions with separate top/bottom text inputs
+- See live preview of your meme while typing
+- Judge picks winner from their phone
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Game Flow
+
+```
+Lobby -> Round Start -> Caption Phase (60s) -> Judging -> Winner -> Next Round
+                                                              |
+                                                    End Game (when host chooses)
+```
+
+## Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `CLOUDINARY_CLOUD_NAME` | Your Cloudinary cloud name |
+| `CLOUDINARY_API_KEY` | Cloudinary API key |
+| `CLOUDINARY_API_SECRET` | Cloudinary API secret |
+| `PORT` | Server port (default: 3001) |
+
+## Deployment on Render
+
+1. Create a new Web Service
+2. Connect your GitHub repo
+3. Set build command: `npm run build`
+4. Set start command: `npm start`
+5. Add environment variables
+6. Deploy!
+
+## License
+
+MIT
+
+---
+
+Made with love for Eran's 50th birthday!
