@@ -95,21 +95,22 @@ body {
 
   .meme-text {
     font-family: Impact, 'Arial Black', sans-serif;
-    font-size: clamp(1rem, 3vw, 2.5rem);
+    font-size: clamp(1.2rem, 4vw, 3rem);
     font-weight: 900;
     color: white;
     text-transform: uppercase;
     text-shadow:
-      2px 2px 0 #000,
-      -2px -2px 0 #000,
-      2px -2px 0 #000,
-      -2px 2px 0 #000,
-      2px 0 0 #000,
-      -2px 0 0 #000,
-      0 2px 0 #000,
-      0 -2px 0 #000;
+      3px 3px 0 #000,
+      -3px -3px 0 #000,
+      3px -3px 0 #000,
+      -3px 3px 0 #000,
+      3px 0 0 #000,
+      -3px 0 0 #000,
+      0 3px 0 #000,
+      0 -3px 0 #000;
     line-height: 1.1;
     word-wrap: break-word;
+    letter-spacing: 0.5px;
   }
 
   /* Pulse animation for connecting states */

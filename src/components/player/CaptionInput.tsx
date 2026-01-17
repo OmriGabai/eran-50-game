@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Round, Player } from '@/types/game';
 import { Timer } from '../shared/Timer';
+import { MemeImage } from '../shared/MemeImage';
 import { CAPTION_TIME_SECONDS } from '@/types/game';
 
 interface CaptionInputProps {
@@ -13,32 +14,45 @@ interface CaptionInputProps {
 }
 
 export function CaptionInput({ round, player, timeRemaining, onSubmit }: CaptionInputProps) {
-  const [caption, setCaption] = useState('');
+  const [topText, setTopText] = useState('');
+  const [bottomText, setBottomText] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!caption.trim() || isSubmitted) return;
+    if ((!topText.trim() && !bottomText.trim()) || isSubmitted) return;
 
-    onSubmit(caption.trim());
+    // Combine top and bottom with newline (splitCaption will parse this)
+    const caption = topText.trim() && bottomText.trim()
+      ? `${topText.trim()}\n${bottomText.trim()}`
+      : topText.trim() || bottomText.trim();
+
+    onSubmit(caption);
     setIsSubmitted(true);
   };
 
+  const hasContent = topText.trim() || bottomText.trim();
+  const totalLength = topText.length + bottomText.length;
+
   if (player.hasSubmitted || isSubmitted) {
     return (
-      <div className="min-h-screen gradient-bg flex flex-col p-4">
+      <div className="min-h-screen min-h-[100dvh] gradient-bg flex flex-col p-4 safe-area-top safe-area-bottom">
         <div className="flex-1 flex items-center justify-center">
           <div className="card w-full max-w-md text-center">
-            <div className="text-6xl mb-4">&#10003;</div>
-            <h2 className="text-2xl font-bold text-green-600 mb-2">
+            <div className="text-6xl mb-4">{'\u{2705}'}</div>
+            <h2 className="text-2xl font-bold text-green-600 mb-4">
               Caption Submitted!
             </h2>
             <p className="text-purple/60 mb-4">
               Waiting for other players...
             </p>
-            <div className="bg-gold/10 p-4 rounded-lg">
-              <p className="text-purple-dark italic">&quot;{caption}&quot;</p>
-            </div>
+            {round.imageUrl && (
+              <MemeImage
+                imageUrl={round.imageUrl}
+                topText={topText.trim()}
+                bottomText={bottomText.trim()}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -48,58 +62,70 @@ export function CaptionInput({ round, player, timeRemaining, onSubmit }: Caption
   return (
     <div className="min-h-screen min-h-[100dvh] gradient-bg flex flex-col p-3 sm:p-4 safe-area-top safe-area-bottom">
       {/* Timer */}
-      <div className="mb-3">
+      <div className="mb-2">
         <Timer seconds={timeRemaining} maxSeconds={CAPTION_TIME_SECONDS} />
       </div>
 
       {/* Round info */}
-      <div className="text-center mb-3">
+      <div className="text-center mb-2">
         <span className="bg-purple/10 text-purple px-3 py-1 rounded-full text-sm font-medium">
           Round {round.number} - {round.type.toUpperCase()}
         </span>
         <span className="ml-2 text-gold font-bold">{round.points} pts</span>
       </div>
 
-      {/* Image thumbnail */}
-      <div className="card p-2 mb-3">
-        <p className="text-purple font-medium text-center mb-2 text-sm">Caption this!</p>
-        <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
-          {round.imageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={round.imageUrl}
-              alt="Caption this!"
-              className="w-full h-full object-contain"
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <span className="text-gray-400">Loading image...</span>
-            </div>
-          )}
-        </div>
+      {/* Live meme preview */}
+      <div className="card p-2 mb-2">
+        {round.imageUrl && (
+          <MemeImage
+            imageUrl={round.imageUrl}
+            topText={topText || undefined}
+            bottomText={bottomText || undefined}
+          />
+        )}
       </div>
 
-      {/* Caption input */}
-      <form onSubmit={handleSubmit} className="flex-1 flex flex-col">
-        <div className="flex-1">
-          <textarea
-            value={caption}
-            onChange={(e) => setCaption(e.target.value)}
-            placeholder="Write your caption here... (use Enter for top/bottom split)"
-            className="input-field h-24 sm:h-32 resize-none text-base sm:text-lg"
-            maxLength={200}
+      {/* Caption inputs */}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+        {/* Top text input */}
+        <div>
+          <label className="text-xs text-purple/60 font-medium mb-1 block px-1">
+            TOP TEXT
+          </label>
+          <input
+            type="text"
+            value={topText}
+            onChange={(e) => setTopText(e.target.value.toUpperCase())}
+            placeholder="TOP TEXT (OPTIONAL)"
+            className="input-field text-base uppercase"
+            maxLength={100}
             autoFocus
           />
-          <div className="flex justify-between text-sm text-purple/50 mt-1 px-1">
-            <span className="text-xs">Tip: Press Enter to split top/bottom</span>
-            <span>{caption.length}/200</span>
-          </div>
+        </div>
+
+        {/* Bottom text input */}
+        <div>
+          <label className="text-xs text-purple/60 font-medium mb-1 block px-1">
+            BOTTOM TEXT
+          </label>
+          <input
+            type="text"
+            value={bottomText}
+            onChange={(e) => setBottomText(e.target.value.toUpperCase())}
+            placeholder="BOTTOM TEXT (OPTIONAL)"
+            className="input-field text-base uppercase"
+            maxLength={100}
+          />
+        </div>
+
+        <div className="text-right text-xs text-purple/50 px-1">
+          {totalLength}/200
         </div>
 
         <button
           type="submit"
-          disabled={!caption.trim()}
-          className="btn-primary text-lg sm:text-xl mt-3 py-4"
+          disabled={!hasContent}
+          className="btn-primary text-lg sm:text-xl py-4 mt-1"
         >
           Submit Caption
         </button>
