@@ -25,18 +25,18 @@ export default function HostPage() {
 
   if (!isConnected) {
     return (
-      <div className="min-h-screen gradient-bg flex items-center justify-center">
+      <div className="min-h-screen gradient-bg flex items-center justify-center" dir="rtl">
         <div className="card text-center">
           <div className="text-4xl mb-4 animate-pulse">{'\u{1F50C}'}</div>
           <h2 className="text-2xl font-bold text-purple">
-            {error ? 'Reconnecting...' : 'Connecting...'}
+            {error ? 'מתחבר מחדש...' : 'מתחבר...'}
           </h2>
           <p className="text-purple/60 mt-2">
-            {error || 'Setting up the party game'}
+            {error || 'מכין את המשחק'}
           </p>
           {error && (
             <p className="text-sm text-purple/40 mt-4">
-              The game will resume automatically when connected
+              המשחק ימשיך אוטומטית כשיתחבר
             </p>
           )}
         </div>
@@ -46,10 +46,10 @@ export default function HostPage() {
 
   if (!gameState) {
     return (
-      <div className="min-h-screen gradient-bg flex items-center justify-center">
+      <div className="min-h-screen gradient-bg flex items-center justify-center" dir="rtl">
         <div className="card text-center">
-          <div className="animate-spin text-4xl mb-4">&#127790;</div>
-          <h2 className="text-2xl font-bold text-purple">Loading game...</h2>
+          <div className="animate-spin text-4xl mb-4">{'\u{1F389}'}</div>
+          <h2 className="text-2xl font-bold text-purple">טוען משחק...</h2>
         </div>
       </div>
     );

@@ -153,6 +153,18 @@ export function useSocket() {
     socket?.emit('reset-game');
   }, [socket]);
 
+  const swapImage = useCallback((): Promise<{ success: boolean; newImageUrl?: string; swapsRemaining?: number; error?: string }> => {
+    return new Promise((resolve) => {
+      if (!socket) {
+        resolve({ success: false, error: 'לא מחובר' });
+        return;
+      }
+      socket.emit('swap-image', (response) => {
+        resolve(response);
+      });
+    });
+  }, [socket]);
+
   const currentPlayer = gameState?.players.find((p) => p.id === playerId) ?? null;
 
   return {
@@ -171,5 +183,6 @@ export function useSocket() {
     nextRound,
     endGame,
     resetGame,
+    swapImage,
   };
 }

@@ -10,20 +10,26 @@ interface CaptionScreenProps {
   timeRemaining: number;
 }
 
+const roundTypeHebrew = {
+  normal: 'רגיל',
+  roast: 'צליה',
+  tribute: 'מחווה'
+};
+
 export function CaptionScreen({ round, players, timeRemaining }: CaptionScreenProps) {
   const activePlayers = players.filter(p => p.isConnected && !p.isJudge);
   const submittedCount = activePlayers.filter(p => p.hasSubmitted).length;
 
   return (
-    <div className="min-h-screen gradient-bg p-8">
+    <div className="min-h-screen gradient-bg p-8" dir="rtl">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div className="text-2xl font-bold text-purple">
-            Round {round.number} - {round.type.toUpperCase()}
+            סיבוב {round.number} - {roundTypeHebrew[round.type]}
           </div>
           <div className="bg-gold/20 px-4 py-2 rounded-full">
-            <span className="font-bold text-gold">{round.points} pts</span>
+            <span className="font-bold text-gold">{round.points} נק׳</span>
           </div>
         </div>
 
@@ -34,39 +40,45 @@ export function CaptionScreen({ round, players, timeRemaining }: CaptionScreenPr
 
         {/* Main content */}
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Image */}
+          {/* Show all player images in a grid */}
           <div className="lg:col-span-2">
             <div className="card p-4">
-              <div className="relative aspect-video bg-gray-200 rounded-lg overflow-hidden">
-                {round.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={round.imageUrl}
-                    alt="Caption this!"
-                    className="w-full h-full object-contain"
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <span className="text-gray-400 text-xl">Image loading...</span>
+              <h3 className="text-lg font-bold text-purple mb-3 text-center">התמונות של השחקנים</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {activePlayers.map(player => (
+                  <div key={player.id} className="relative">
+                    <div className={`relative aspect-video bg-black rounded-lg overflow-hidden shadow-lg
+                      ${player.hasSubmitted ? 'ring-2 ring-green-500' : 'opacity-70'}`}>
+                      {player.currentImageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={player.currentImageUrl}
+                          alt={`תמונה של ${player.name}`}
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center h-full">
+                          <span className="text-gray-400 text-sm">טוען...</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className={`text-center text-xs mt-1 font-medium ${player.hasSubmitted ? 'text-green-600' : 'text-purple/40'}`}>
+                      {player.name} {player.hasSubmitted ? '\u{2705}' : '...'}
+                    </div>
                   </div>
-                )}
+                ))}
               </div>
-              {round.imageCaption && (
-                <p className="mt-2 text-center text-purple/60 italic">
-                  {round.imageCaption}
-                </p>
-              )}
             </div>
           </div>
 
           {/* Submission status */}
           <div className="card">
-            <h3 className="text-xl font-bold text-purple mb-4">Submissions</h3>
+            <h3 className="text-xl font-bold text-purple mb-4">הגשות</h3>
             <div className="text-center mb-6">
               <div className="text-5xl font-bold text-gold">
                 {submittedCount}/{activePlayers.length}
               </div>
-              <p className="text-purple/60">players submitted</p>
+              <p className="text-purple/60">שחקנים הגישו</p>
             </div>
 
             <div className="space-y-2">
@@ -80,7 +92,7 @@ export function CaptionScreen({ round, players, timeRemaining }: CaptionScreenPr
                 >
                   <span className="font-medium text-purple-dark">{player.name}</span>
                   {player.hasSubmitted ? (
-                    <span className="text-green-600">&#10003;</span>
+                    <span className="text-green-600">{'\u{2713}'}</span>
                   ) : (
                     <span className="text-gray-400">...</span>
                   )}

@@ -110,6 +110,20 @@ export function initializeSocket(httpServer: HTTPServer) {
       gameManager.resetGame();
     });
 
+    // Player swaps image
+    socket.on('swap-image', (callback) => {
+      const playerId = socketToPlayer.get(socket.id);
+      if (playerId) {
+        const result = gameManager.swapImage(playerId);
+        if (result.success && result.newImageUrl !== undefined && result.swapsRemaining !== undefined) {
+          io?.emit('image-swapped', playerId, result.newImageUrl, result.swapsRemaining);
+        }
+        callback(result);
+      } else {
+        callback({ success: false, error: 'לא מחובר' });
+      }
+    });
+
     // Player reconnects
     socket.on('reconnect', (playerId, callback) => {
       console.log(`[RECONNECT] Player attempting to reconnect | socketId=${socket.id} | playerId=${playerId}`);

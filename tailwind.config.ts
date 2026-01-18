@@ -11,32 +11,42 @@ const config: Config = {
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
+        orange: {
+          DEFAULT: "#FF6B00",
+          light: "#FF8533",
+          dark: "#E55A00",
+        },
+        dark: {
+          DEFAULT: "#1a1a1a",
+          lighter: "#2d2d2d",
+        },
+        // Keep gold/purple/cream for backwards compatibility (mapped to new colors)
         gold: {
-          DEFAULT: "#D4AF37",
-          light: "#E5C76B",
-          dark: "#B8942E",
+          DEFAULT: "#FF6B00",
+          light: "#FF8533",
+          dark: "#E55A00",
         },
         purple: {
-          DEFAULT: "#6B2D5C",
-          light: "#8B4D7C",
-          dark: "#4B1D3C",
+          DEFAULT: "#ffffff",
+          light: "#f5f5f5",
+          dark: "#e0e0e0",
         },
         cream: {
-          DEFAULT: "#FDF8E8",
-          dark: "#F5EED6",
+          DEFAULT: "#f5f5f5",
+          dark: "#e0e0e0",
         },
       },
       animation: {
         "bounce-slow": "bounce 2s infinite",
-        "pulse-gold": "pulse-gold 2s ease-in-out infinite",
+        "pulse-gold": "pulse-orange 2s ease-in-out infinite",
         "slide-up": "slide-up 0.5s ease-out",
         "fade-in": "fade-in 0.5s ease-out",
         "confetti": "confetti 1s ease-out forwards",
       },
       keyframes: {
-        "pulse-gold": {
-          "0%, 100%": { boxShadow: "0 0 20px rgba(212, 175, 55, 0.5)" },
-          "50%": { boxShadow: "0 0 40px rgba(212, 175, 55, 0.8)" },
+        "pulse-orange": {
+          "0%, 100%": { boxShadow: "0 0 20px rgba(255, 107, 0, 0.5)" },
+          "50%": { boxShadow: "0 0 40px rgba(255, 107, 0, 0.8)" },
         },
         "slide-up": {
           "0%": { transform: "translateY(20px)", opacity: "0" },

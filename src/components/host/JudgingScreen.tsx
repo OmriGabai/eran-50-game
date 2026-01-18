@@ -36,25 +36,25 @@ export function JudgingScreen({ round, judge, onSelectWinner }: JudgingScreenPro
   };
 
   return (
-    <div className="min-h-screen gradient-bg p-8">
+    <div className="min-h-screen gradient-bg p-8" dir="rtl">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
           <h2 className="text-4xl font-bold title-text mb-2">
-            Time to Judge!
+            זמן לשפוט!
           </h2>
           {judge ? (
             <p className="text-xl text-purple/70">
-              {judge.name}, pick your favorite!
+              {judge.name}, בחר את המועדף עליך!
             </p>
           ) : (
             <p className="text-xl text-amber-600">
-              Anyone can pick the winner (host controls)
+              כל אחד יכול לבחור מנצח (בשליטת המנחה)
             </p>
           )}
         </div>
 
-        {/* Meme grid */}
+        {/* Meme grid - each caption has its own image! */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {round.captions.map((caption) => {
             const { top, bottom } = splitCaption(caption.text);
@@ -65,16 +65,20 @@ export function JudgingScreen({ round, judge, onSelectWinner }: JudgingScreenPro
                 className="group transition-all duration-200 hover:scale-105 focus:outline-none"
               >
                 <div className="card p-3 group-hover:border-gold group-hover:shadow-2xl transition-all">
-                  {round.imageUrl && (
-                    <MemeImage
-                      imageUrl={round.imageUrl}
-                      topText={top}
-                      bottomText={bottom}
-                    />
-                  )}
-                  <p className="mt-2 text-sm text-purple/60 text-center">
-                    - {caption.playerName}
-                  </p>
+                  {/* Use caption.imageUrl - each player had their own image! */}
+                  <MemeImage
+                    imageUrl={caption.imageUrl}
+                    topText={top}
+                    bottomText={bottom}
+                  />
+                  <div className="mt-2 flex justify-between items-center">
+                    <span className="text-sm text-purple/60">- {caption.playerName}</span>
+                    {caption.speedBonus > 0 && (
+                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                        +{caption.speedBonus} בונוס
+                      </span>
+                    )}
+                  </div>
                 </div>
               </button>
             );

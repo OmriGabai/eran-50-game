@@ -7,21 +7,21 @@ interface RoundStartScreenProps {
 }
 
 const roundTypeLabels: Record<RoundType, { title: string; description: string; emoji: string }> = {
-  normal: { title: 'Caption This!', description: 'Make it funny!', emoji: '&#128514;' },
-  roast: { title: 'Roast Round!', description: 'Personal photo time - be ruthless!', emoji: '&#128293;' },
-  tribute: { title: 'Tribute Round', description: 'Show some love to the birthday boy!', emoji: '&#10084;&#65039;' },
+  normal: { title: 'כתבו כיתוב!', description: 'תעשו את זה מצחיק!', emoji: '\u{1F602}' },
+  roast: { title: 'סיבוב צליה!', description: 'תמונה אישית - תהיו אכזריים!', emoji: '\u{1F525}' },
+  tribute: { title: 'סיבוב מחווה', description: 'תראו קצת אהבה לחוגג!', emoji: '\u{2764}\u{FE0F}' },
 };
 
 export function RoundStartScreen({ round }: RoundStartScreenProps) {
   const typeInfo = roundTypeLabels[round.type];
 
   return (
-    <div className="min-h-screen gradient-bg flex items-center justify-center p-8">
+    <div className="min-h-screen gradient-bg flex items-center justify-center p-8" dir="rtl">
       <div className="text-center animate-fade-in">
-        <div className="text-8xl mb-4" dangerouslySetInnerHTML={{ __html: typeInfo.emoji }} />
+        <div className="text-8xl mb-4">{typeInfo.emoji}</div>
 
         <h1 className="text-6xl font-bold text-purple mb-4">
-          Round {round.number}
+          סיבוב {round.number}
         </h1>
 
         <h2 className="text-4xl font-bold title-text mb-4">
@@ -34,7 +34,7 @@ export function RoundStartScreen({ round }: RoundStartScreenProps) {
 
         <div className="inline-block bg-gold/20 px-6 py-3 rounded-full">
           <span className="text-xl font-bold text-gold">
-            {round.points} points at stake!
+            {round.points} נקודות על הכף!
           </span>
         </div>
       </div>

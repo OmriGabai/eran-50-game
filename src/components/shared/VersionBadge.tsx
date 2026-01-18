@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-const VERSION = 'v1.7.0';
+const VERSION = 'v2.0.0';
 
 export function VersionBadge() {
   const [visible, setVisible] = useState(true);
@@ -18,8 +18,8 @@ export function VersionBadge() {
   return (
     <div
       className={`
-        fixed top-2 right-2 z-50
-        text-xs font-mono text-purple/60 bg-white/80 px-2 py-1 rounded
+        fixed top-2 left-2 z-50
+        text-xs font-mono text-orange/80 bg-dark-lighter/90 px-2 py-1 rounded border border-orange/20
         transition-opacity duration-500
         ${visible ? 'opacity-100' : 'opacity-0 pointer-events-none'}
       `}

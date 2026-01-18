@@ -6,7 +6,9 @@ import {
   GameImage,
   ROUND_CONFIG,
   CAPTION_TIME_SECONDS,
-  JUDGE_NAME,
+  MAX_SWAPS_PER_ROUND,
+  SPEED_BONUS,
+  isJudgeName,
 } from '../types/game';
 
 type StateChangeCallback = (state: GameState) => void;
@@ -17,6 +19,8 @@ class GameManager {
   private onStateChange: StateChangeCallback | null = null;
   private onTimerTick: TimerCallback | null = null;
   private timerInterval: NodeJS.Timeout | null = null;
+  private availableImages: string[] = []; // Pool of available images for swapping
+  private roundStartTime: number = 0;
 
   constructor() {
     this.state = this.getInitialState();
@@ -74,7 +78,7 @@ class GameManager {
       return { success: false, error: 'Game already in progress' };
     }
 
-    const isJudge = name.toLowerCase() === JUDGE_NAME.toLowerCase();
+    const isJudge = isJudgeName(name);
     const player: Player = {
       id: uuidv4(),
       name,
@@ -82,6 +86,7 @@ class GameManager {
       isJudge,
       isConnected: true,
       hasSubmitted: false,
+      swapsRemaining: MAX_SWAPS_PER_ROUND,
     };
 
     this.state.players.push(player);
@@ -144,23 +149,42 @@ class GameManager {
     const configIndex = (this.state.roundNumber - 1) % ROUND_CONFIG.length;
     const roundConfig = ROUND_CONFIG[configIndex];
 
-    // Cycle through images for bonus rounds
-    const imageIndex = (this.state.roundNumber - 1) % Math.max(this.state.images.length, 1);
-    const image = this.state.images[imageIndex];
+    // Shuffle all images and assign to players
+    const shuffledImages = this.shuffleArray([...this.state.images]);
+    this.availableImages = shuffledImages.map(img => img.url);
 
-    // Reset player submission status
+    // Get active non-judge players
+    const activePlayers = this.state.players.filter(p => p.isConnected && !p.isJudge);
+
+    // Reset player submission status and assign images
     this.state.players.forEach((p) => {
       p.hasSubmitted = false;
+      p.swapsRemaining = MAX_SWAPS_PER_ROUND;
+
+      if (!p.isJudge && p.isConnected) {
+        // Assign a unique image to each player
+        if (this.availableImages.length > 0) {
+          p.currentImageUrl = this.availableImages.shift();
+        } else {
+          // If we run out of images, cycle through
+          const imageIndex = activePlayers.indexOf(p) % Math.max(this.state.images.length, 1);
+          p.currentImageUrl = this.state.images[imageIndex]?.url || `/images/meme-templates/placeholder-${this.state.roundNumber}.jpg`;
+        }
+      }
     });
+
+    // Default image for round (used as fallback)
+    const defaultImage = this.state.images[0];
 
     this.state.currentRound = {
       number: this.state.roundNumber,
       type: roundConfig.type,
-      imageUrl: image?.url || `/images/meme-templates/placeholder-${this.state.roundNumber}.jpg`,
-      imageCaption: image?.caption,
+      imageUrl: defaultImage?.url || `/images/meme-templates/placeholder-${this.state.roundNumber}.jpg`,
+      imageCaption: defaultImage?.caption,
       captions: [],
       points: roundConfig.points,
       timeRemaining: CAPTION_TIME_SECONDS,
+      startedAt: 0, // Will be set when caption phase starts
     };
 
     this.state.phase = 'round-start';
@@ -175,6 +199,10 @@ class GameManager {
 
   private startCaptionPhase() {
     this.state.phase = 'caption';
+    this.roundStartTime = Date.now();
+    if (this.state.currentRound) {
+      this.state.currentRound.startedAt = this.roundStartTime;
+    }
     this.emitState();
     this.startTimer();
   }
@@ -205,6 +233,17 @@ class GameManager {
     }
   }
 
+  private calculateSpeedBonus(timeRemaining: number, basePoints: number): number {
+    if (timeRemaining >= SPEED_BONUS.FAST.minTimeRemaining) {
+      return Math.round(basePoints * SPEED_BONUS.FAST.bonus);
+    } else if (timeRemaining >= SPEED_BONUS.MEDIUM.minTimeRemaining) {
+      return Math.round(basePoints * SPEED_BONUS.MEDIUM.bonus);
+    } else if (timeRemaining >= SPEED_BONUS.SLOW.minTimeRemaining) {
+      return Math.round(basePoints * SPEED_BONUS.SLOW.bonus);
+    }
+    return 0;
+  }
+
   submitCaption(playerId: string, text: string): boolean {
     if (this.state.phase !== 'caption' || !this.state.currentRound) {
       return false;
@@ -215,11 +254,16 @@ class GameManager {
       return false;
     }
 
+    const timeRemaining = this.state.currentRound.timeRemaining;
+    const speedBonus = this.calculateSpeedBonus(timeRemaining, this.state.currentRound.points);
+
     const caption: Caption = {
       playerId,
       playerName: player.name,
       text: text.trim(),
       submittedAt: Date.now(),
+      imageUrl: player.currentImageUrl || this.state.currentRound.imageUrl,
+      speedBonus,
     };
 
     this.state.currentRound.captions.push(caption);
@@ -290,10 +334,11 @@ class GameManager {
 
     this.state.currentRound.winningCaption = winningCaption;
 
-    // Award points
+    // Award base points + speed bonus
     const winner = this.state.players.find((p) => p.id === winnerPlayerId);
     if (winner) {
-      winner.score += this.state.currentRound.points;
+      const totalPoints = this.state.currentRound.points + winningCaption.speedBonus;
+      winner.score += totalPoints;
     }
 
     this.state.phase = 'winner';
@@ -303,6 +348,53 @@ class GameManager {
 
   proceedToNextRound() {
     this.startNextRound();
+  }
+
+  swapImage(playerId: string): { success: boolean; newImageUrl?: string; swapsRemaining?: number; error?: string } {
+    if (this.state.phase !== 'caption' || !this.state.currentRound) {
+      return { success: false, error: 'לא בשלב הכתיבה' };
+    }
+
+    const player = this.state.players.find((p) => p.id === playerId);
+    if (!player || player.isJudge) {
+      return { success: false, error: 'שחקן לא נמצא' };
+    }
+
+    if (player.hasSubmitted) {
+      return { success: false, error: 'כבר הגשת כיתוב' };
+    }
+
+    if (player.swapsRemaining <= 0) {
+      return { success: false, error: 'אין לך עוד החלפות' };
+    }
+
+    // Get current image and put it back in the pool
+    const currentImage = player.currentImageUrl;
+    if (currentImage) {
+      this.availableImages.push(currentImage);
+    }
+
+    // Shuffle and pick a new image
+    this.availableImages = this.shuffleArray(this.availableImages);
+    const newImage = this.availableImages.shift();
+
+    if (!newImage) {
+      // No images available, put the current one back and fail
+      if (currentImage) {
+        this.availableImages.unshift(currentImage);
+      }
+      return { success: false, error: 'אין תמונות זמינות' };
+    }
+
+    player.currentImageUrl = newImage;
+    player.swapsRemaining--;
+    this.emitState();
+
+    return {
+      success: true,
+      newImageUrl: newImage,
+      swapsRemaining: player.swapsRemaining
+    };
   }
 
   endGameExplicitly() {

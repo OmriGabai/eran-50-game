@@ -37,7 +37,8 @@ function splitCaption(text: string): { top: string; bottom: string } {
 
 export function WinnerScreen({ round, players, onNextRound, onEndGame, isLastRound }: WinnerScreenProps) {
   const winner = players.find(p => p.id === round.winningCaption?.playerId);
-  const captionText = round.winningCaption?.text || '';
+  const winningCaption = round.winningCaption;
+  const captionText = winningCaption?.text || '';
   const { top, bottom } = splitCaption(captionText);
 
   useEffect(() => {
@@ -70,13 +71,15 @@ export function WinnerScreen({ round, players, onNextRound, onEndGame, isLastRou
     frame();
   }, []);
 
+  const totalPoints = round.points + (winningCaption?.speedBonus || 0);
+
   return (
-    <div className="min-h-screen gradient-bg p-8 flex items-center justify-center">
+    <div className="min-h-screen gradient-bg p-8 flex items-center justify-center" dir="rtl">
       <div className="max-w-4xl mx-auto text-center">
         <div className="card p-12">
           <div className="text-6xl mb-4">{'\u{1F3C6}'}</div>
 
-          <h2 className="text-4xl font-bold title-text mb-6">Winner!</h2>
+          <h2 className="text-4xl font-bold title-text mb-6">מנצח!</h2>
 
           {winner && (
             <div className="mb-8">
@@ -84,16 +87,19 @@ export function WinnerScreen({ round, players, onNextRound, onEndGame, isLastRou
                 {winner.name}
               </div>
               <div className="text-2xl text-purple/70">
-                +{round.points} points!
+                +{round.points} נקודות{winningCaption?.speedBonus ? ` (+${winningCaption.speedBonus} בונוס מהירות)` : ''}
+              </div>
+              <div className="text-lg text-green-600 font-bold">
+                סה״כ: {totalPoints} נקודות
               </div>
             </div>
           )}
 
-          {/* Winning meme */}
-          {round.imageUrl && (
+          {/* Winning meme - use caption's imageUrl! */}
+          {winningCaption?.imageUrl && (
             <div className="max-w-lg mx-auto mb-8">
               <MemeImage
-                imageUrl={round.imageUrl}
+                imageUrl={winningCaption.imageUrl}
                 topText={top}
                 bottomText={bottom}
               />
@@ -105,18 +111,18 @@ export function WinnerScreen({ round, players, onNextRound, onEndGame, isLastRou
               onClick={onNextRound}
               className="btn-primary text-xl px-8 py-3"
             >
-              {isLastRound ? 'Bonus Round!' : 'Next Round'}
+              {isLastRound ? 'סיבוב בונוס!' : 'סיבוב הבא'}
             </button>
             <button
               onClick={onEndGame}
               className="btn-secondary text-xl px-8 py-3"
             >
-              End Game
+              סיים משחק
             </button>
           </div>
           {isLastRound && (
             <p className="text-purple/60 mt-4 text-sm">
-              All planned rounds complete! Continue with bonus rounds or end the game.
+              כל הסיבובים המתוכננים הושלמו! המשיכו עם סיבובי בונוס או סיימו את המשחק.
             </p>
           )}
         </div>

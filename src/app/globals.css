@@ -3,11 +3,18 @@
 @tailwind utilities;
 
 :root {
-  --background: #FDF8E8;
-  --foreground: #4B1D3C;
-  --gold: #D4AF37;
-  --purple: #6B2D5C;
-  --cream: #FDF8E8;
+  --background: #1a1a1a;
+  --foreground: #ffffff;
+  --orange: #FF6B00;
+  --orange-dark: #E55A00;
+  --orange-light: #FF8533;
+  --dark: #1a1a1a;
+  --dark-lighter: #2d2d2d;
+  --cream: #f5f5f5;
+  /* Keep purple/gold for backwards compatibility */
+  --gold: #FF6B00;
+  --purple: #ffffff;
+  --purple-dark: #f5f5f5;
 }
 
 * {
@@ -35,22 +42,22 @@ body {
   }
 }
 
-/* Custom scrollbar for the birthday theme */
+/* Custom scrollbar for the dark orange theme */
 ::-webkit-scrollbar {
   width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #F5EED6;
+  background: #2d2d2d;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #D4AF37;
+  background: #FF6B00;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #B8942E;
+  background: #FF8533;
 }
 
 @layer utilities {
@@ -61,53 +68,53 @@ body {
 
 @layer components {
   .btn-primary {
-    @apply bg-gold hover:bg-gold-dark text-purple-dark font-bold py-3 px-6 rounded-xl
+    @apply bg-orange hover:bg-orange-dark text-white font-bold py-3 px-6 rounded-xl
            transition-all duration-200 shadow-lg hover:shadow-xl
            active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
            touch-manipulation select-none;
   }
 
   .btn-secondary {
-    @apply bg-purple hover:bg-purple-dark text-cream font-bold py-3 px-6 rounded-xl
-           transition-all duration-200 shadow-lg hover:shadow-xl
+    @apply bg-dark-lighter hover:bg-dark text-white font-bold py-3 px-6 rounded-xl
+           transition-all duration-200 shadow-lg hover:shadow-xl border border-orange/30
            active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed
            touch-manipulation select-none;
   }
 
   .card {
-    @apply bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-4 sm:p-6 border-2 border-gold/20;
+    @apply bg-dark-lighter/95 backdrop-blur-sm rounded-2xl shadow-xl p-4 sm:p-6 border border-orange/20;
   }
 
   .input-field {
-    @apply w-full px-4 py-3 rounded-xl border-2 border-gold/30 focus:border-gold
-           focus:outline-none focus:ring-2 focus:ring-gold/20 bg-white/80
-           text-purple-dark placeholder-purple/40 transition-all
+    @apply w-full px-4 py-3 rounded-xl border-2 border-orange/30 focus:border-orange
+           focus:outline-none focus:ring-2 focus:ring-orange/20 bg-dark-lighter
+           text-white placeholder-white/40 transition-all
            text-base; /* Prevents zoom on iOS */
   }
 
   .gradient-bg {
-    @apply bg-gradient-to-br from-cream via-cream-dark to-gold/10;
+    @apply bg-gradient-to-br from-dark via-dark-lighter to-orange/5;
   }
 
   .title-text {
-    @apply text-transparent bg-clip-text bg-gradient-to-r from-purple via-gold to-purple;
+    @apply text-transparent bg-clip-text bg-gradient-to-r from-orange via-orange-light to-orange;
   }
 
   .meme-text {
     font-family: Impact, 'Arial Black', sans-serif;
-    font-size: clamp(1.2rem, 4vw, 3rem);
+    font-size: clamp(0.9rem, 2.5vw, 2rem);
     font-weight: 900;
     color: white;
     text-transform: uppercase;
     text-shadow:
-      3px 3px 0 #000,
-      -3px -3px 0 #000,
-      3px -3px 0 #000,
-      -3px 3px 0 #000,
-      3px 0 0 #000,
-      -3px 0 0 #000,
-      0 3px 0 #000,
-      0 -3px 0 #000;
+      2px 2px 0 #000,
+      -2px -2px 0 #000,
+      2px -2px 0 #000,
+      -2px 2px 0 #000,
+      2px 0 0 #000,
+      -2px 0 0 #000,
+      0 2px 0 #000,
+      0 -2px 0 #000;
     line-height: 1.1;
     word-wrap: break-word;
     letter-spacing: 0.5px;
